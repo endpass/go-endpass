@@ -1,0 +1,12 @@
+{
+  "scopes": [
+    "user:address:read",
+    "user:phone:read",
+    "documents:status:read",
+    "documents:data:read",
+    "documents:image:read",
+    "wallet:address:read",
+    "wallet:accounts:read",
+    "user:email:read"
+  ]
+}

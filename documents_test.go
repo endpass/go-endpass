@@ -1,5 +1,9 @@
 package endpass
 
+import (
+	"io/ioutil"
+)
+
 func (ts *TestSuite) TestDocuments() {
 	documents, err := ts.c.Documents()
 	ts.NoError(err)
@@ -42,4 +46,15 @@ func (ts *TestSuite) TestDocument() {
 	ts.Equal("Authority", document.IssuingAuthority)
 	ts.Equal("Place", document.IssuingPlace)
 	ts.Equal("Address", document.Address)
+}
+
+func (ts *TestSuite) TestDocumentFile() {
+	documentFile, err := ts.c.DocumentFile("1")
+	ts.NoError(err)
+	ts.NotEmpty(documentFile)
+	defer documentFile.Close()
+	fileBody, err := ioutil.ReadAll(documentFile)
+	ts.NoError(err)
+	ts.NotEmpty(fileBody)
+	ts.Equal("{}\n", string(fileBody))
 }

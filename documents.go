@@ -1,6 +1,9 @@
 package endpass
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 type Document struct {
 	ID               string `json:"id"`
@@ -44,4 +47,12 @@ func (c *Client) Document(id string) (*Document, error) {
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c *Client) DocumentFile(id string) (io.ReadCloser, error) {
+	r, err := c.Get(fmt.Sprintf("/documents/%s/file", id))
+	if err != nil {
+		return nil, err
+	}
+	return r.Body, nil
 }

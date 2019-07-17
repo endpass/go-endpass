@@ -1,0 +1,19 @@
+[
+  {
+    "id": "f1f80c7a-57c7-4259-8e80-d1bb09932e82",
+    "createdAt": 1543336121,
+    "status": "New",
+    "documentType": "Passport",
+    "description": "Custom document description",
+    "firstName": "Test",
+    "lastName": "User",
+    "number": "47313892501",
+    "dateOfBirth": 1543323121,
+    "dateOfIssue": 1543336122,
+    "dateOfExpiry": 1543336123,
+    "issuingCountry": "Country",
+    "issuingAuthority": "Authority",
+    "issuingPlace": "Place",
+    "address": "Address"
+  }
+]

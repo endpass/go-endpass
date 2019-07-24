@@ -44,6 +44,10 @@ func (c *Client) AuthCodeURL() string {
 	return c.oauth2Config.AuthCodeURL(c.state)
 }
 
+func (c *Client) IsStateValid(state string) bool {
+	return c.state == state
+}
+
 func (c *Client) Exchange(code string) error {
 	ctx := context.Background()
 

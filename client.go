@@ -24,17 +24,20 @@ func NewClient(
 	clientId string, scopes []string, state string, redirectURL string,
 ) *Client {
 	config := &oauth2.Config{
-		ClientID: clientId,
-		// ClientSecret: clientSecret,
-		Scopes:      scopes,
-		RedirectURL: redirectURL,
-		Endpoint:    OAuth2Endpoint,
+		ClientID:     clientId,
+		ClientSecret: "",
+		Scopes:       scopes,
+		RedirectURL:  redirectURL,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  OAuth2BaseURL + "/api/v1.1/oauth/auth",
+			TokenURL: OAuth2BaseURL + "/api/v1.1/oauth/token",
+		},
 	}
 	// var src oauth2.TokenSource
 	// c := oauth2.NewClient(context.Background(), src)
 	return &Client{
 		// httpClient:   c,
-		baseUrl:      APIBase,
+		baseUrl:      PublicAPIBaseURL,
 		oauth2Config: config,
 		state:        state,
 	}

@@ -3,7 +3,6 @@ package endpass
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -15,11 +14,11 @@ import (
 type Client struct {
 	httpClient   *http.Client
 	oauth2Config *oauth2.Config
+	dialer       proxy.Dialer
 	baseUrl      string
 	state        string
 }
 
-// TODO TokenSource implementation
 func NewClient(
 	clientId string, scopes []string, state string, redirectURL string,
 ) *Client {
@@ -33,14 +32,18 @@ func NewClient(
 			TokenURL: OAuth2BaseURL + "/api/v1.1/oauth/token",
 		},
 	}
-	// var src oauth2.TokenSource
-	// c := oauth2.NewClient(context.Background(), src)
 	return &Client{
-		// httpClient:   c,
+		httpClient:   nil,
 		baseUrl:      PublicAPIBaseURL,
 		oauth2Config: config,
+		dialer:       nil,
 		state:        state,
 	}
+}
+
+// SetDialer install custom Dialer. Needed for example for working through proxy server.
+func (c *Client) SetDialer(dialer proxy.Dialer) {
+	c.dialer = dialer
 }
 
 func (c *Client) AuthCodeURL() string {
@@ -54,9 +57,13 @@ func (c *Client) IsStateValid(state string) bool {
 func (c *Client) Exchange(code string) error {
 	ctx := context.Background()
 
-	httpClient, err := makeHttpClientWithProxy()
-	if err != nil {
-		return err
+	httpTransport := &http.Transport{}
+	if c.dialer != nil {
+		httpTransport.Dial = c.dialer.Dial
+	}
+	httpClient := &http.Client{
+		Timeout:   2 * time.Second,
+		Transport: httpTransport,
 	}
 
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
@@ -97,20 +104,6 @@ func (c *Client) parseResponse(r *http.Response, v interface{}) error {
 	defer r.Body.Close()
 	err = json.Unmarshal(body, v)
 	return err
-}
-
-func makeHttpClientWithProxy() (*http.Client, error) {
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
-	if err != nil {
-		return nil, fmt.Errorf("can't connect to the proxy: %s", err.Error())
-	}
-	httpTransport := &http.Transport{}
-	httpClient := &http.Client{
-		Timeout:   2 * time.Second,
-		Transport: httpTransport,
-	}
-	httpTransport.Dial = dialer.Dial
-	return httpClient, nil
 }
 
 // check200Response converts response codes not equal 200 to errors

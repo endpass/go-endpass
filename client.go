@@ -80,7 +80,11 @@ func (c *Client) Get(path string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return check200Response(resp)
 }
 
 // parses response as JSON into an object
@@ -107,4 +111,12 @@ func makeHttpClientWithProxy() (*http.Client, error) {
 	}
 	httpTransport.Dial = dialer.Dial
 	return httpClient, nil
+}
+
+// check200Response converts response codes not equal 200 to errors
+func check200Response(resp *http.Response) (*http.Response, error) {
+	if resp.StatusCode == http.StatusOK {
+		return resp, nil
+	}
+	return nil, NewErrorHTTPResponse(resp)
 }

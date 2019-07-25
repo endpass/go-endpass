@@ -1,4 +1,4 @@
-module github.com/vedun/go-endpass
+module github.com/endpass/go-endpass
 
 go 1.12
 

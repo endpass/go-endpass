@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/net/proxy"
 	"golang.org/x/oauth2"
@@ -111,5 +112,16 @@ func check200Response(resp *http.Response) (*http.Response, error) {
 	if resp.StatusCode == http.StatusOK {
 		return resp, nil
 	}
-	return nil, NewErrorHTTPResponse(resp)
+	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var bodyString string
+	if utf8.Valid(bodyBytes) {
+		bodyString = string(bodyBytes)
+	} else {
+		bodyString = "<binary response>"
+	}
+	return nil, NewErrorHTTPResponse(resp.Status, bodyString)
 }

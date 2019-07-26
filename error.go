@@ -3,8 +3,6 @@ package endpass
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 )
 
 var (
@@ -13,27 +11,17 @@ var (
 
 // ErrorHTTPResponse return this error if StatusCode from API not equal 200.
 type ErrorHTTPResponse struct {
-	HTTPResponse *http.Response
+	Status       string
+	ResponseBody string
 }
 
-func NewErrorHTTPResponse(resp *http.Response) *ErrorHTTPResponse {
+func NewErrorHTTPResponse(status, responseBody string) *ErrorHTTPResponse {
 	return &ErrorHTTPResponse{
-		HTTPResponse: resp,
+		Status:       status,
+		ResponseBody: responseBody,
 	}
 }
 
 func (e *ErrorHTTPResponse) Error() string {
-	bodyBytes, err := ioutil.ReadAll(e.HTTPResponse.Body)
-	if err != nil {
-		return fmt.Sprintf(
-			"HTTPResponseError(Status: %s; Body: %s)",
-			e.HTTPResponse.Status,
-			err.Error(),
-		)
-	}
-	return fmt.Sprintf(
-		"HTTPResponseError(Status: %s; Body: %s)",
-		e.HTTPResponse.Status,
-		string(bodyBytes),
-	)
+	return fmt.Sprintf("HTTPResponseError(status: %s; responseBody: %s)", e.Status, e.ResponseBody)
 }

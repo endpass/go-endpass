@@ -21,11 +21,11 @@ type Client struct {
 }
 
 func NewClient(
-	clientId string, scopes []string, state string, redirectURL string,
+	clientId, clientSecret string, scopes []string, state string, redirectURL string,
 ) *Client {
 	config := &oauth2.Config{
 		ClientID:     clientId,
-		ClientSecret: "",
+		ClientSecret: clientSecret,
 		Scopes:       scopes,
 		RedirectURL:  redirectURL,
 		Endpoint: oauth2.Endpoint{

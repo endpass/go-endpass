@@ -22,7 +22,7 @@ type TestSuite struct {
 
 func (ts *TestSuite) SetupSuite() {
 	ts.srv = httptest.NewServer(ts)
-	ts.c = NewClient("clientID", []string{"1111"}, "12345", "12345")
+	ts.c = NewClient("clientID", "clientSecret", []string{"1111"}, "12345", "12345")
 	ts.c.httpClient = &http.Client{}
 	ts.c.baseUrl = ts.srv.URL
 }

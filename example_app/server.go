@@ -31,7 +31,13 @@ func main() {
 	//if err != nil {
 	//	log.Fatalln(err)
 	//}
-	//client.SetDialer(dialer)
+	//transport := &http.Transport{}
+	//transport.Dial = dialer.Dial
+	//httpClient := &http.Client{
+	//	Timeout:   2 * time.Second,
+	//	Transport: transport,
+	//}
+	//client.SetHttpClient(httpClient)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		url := client.AuthCodeURL()

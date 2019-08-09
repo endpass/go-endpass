@@ -8,16 +8,16 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/net/proxy"
 	"golang.org/x/oauth2"
 )
 
 type Client struct {
-	httpClient   *http.Client
-	oauth2Config *oauth2.Config
-	dialer       proxy.Dialer
-	baseUrl      string
-	state        string
+	baseClient            *http.Client
+	clientWithTokenSource *http.Client
+	oauth2Config          *oauth2.Config
+	token                 *oauth2.Token
+	baseUrl               string
+	state                 string
 }
 
 func NewClient(
@@ -34,17 +34,29 @@ func NewClient(
 		},
 	}
 	return &Client{
-		httpClient:   nil,
+		baseClient:   defaultHttpClient(2 * time.Second),
 		baseUrl:      PublicAPIBaseURL,
 		oauth2Config: config,
-		dialer:       nil,
 		state:        state,
 	}
 }
 
-// SetDialer install custom Dialer. Needed for example for working through proxy server.
-func (c *Client) SetDialer(dialer proxy.Dialer) {
-	c.dialer = dialer
+func (c *Client) HttpClient() *http.Client {
+	return c.baseClient
+}
+
+func (c *Client) SetHttpClient(httpClient *http.Client) {
+	c.baseClient = httpClient
+	c.clientWithTokenSource = nil
+}
+
+func (c *Client) Token() *oauth2.Token {
+	return c.token
+}
+
+func (c *Client) SetToken(token *oauth2.Token) {
+	c.token = token
+	c.clientWithTokenSource = nil
 }
 
 func (c *Client) AuthCodeURL() string {
@@ -56,39 +68,29 @@ func (c *Client) IsStateValid(state string) bool {
 }
 
 func (c *Client) Exchange(code string) error {
-	ctx := context.Background()
-
-	httpTransport := &http.Transport{}
-	if c.dialer != nil {
-		httpTransport.Dial = c.dialer.Dial
-	}
-	httpClient := &http.Client{
-		Timeout:   2 * time.Second,
-		Transport: httpTransport,
-	}
-
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
-
-	token, err := c.oauth2Config.Exchange(ctx, code)
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, c.baseClient)
+	var err error
+	c.token, err = c.oauth2Config.Exchange(ctx, code)
 	if err != nil {
 		return err
 	}
-
-	c.httpClient = c.oauth2Config.Client(ctx, token)
-
 	return nil
 }
 
 func (c *Client) Get(path string) (*http.Response, error) {
-	if c.httpClient == nil {
+	if c.token == nil {
 		return nil, ErrNoAccessToken
+	}
+	if c.clientWithTokenSource == nil {
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, c.baseClient)
+		c.clientWithTokenSource = c.oauth2Config.Client(ctx, c.token)
 	}
 	reqUrl := c.baseUrl + path
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.clientWithTokenSource.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +105,7 @@ func (c *Client) parseResponse(r *http.Response, v interface{}) error {
 		return err
 	}
 	defer r.Body.Close()
-	err = json.Unmarshal(body, v)
-	return err
+	return json.Unmarshal(body, v)
 }
 
 // check200Response converts response codes not equal 200 to errors

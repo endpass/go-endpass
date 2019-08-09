@@ -72,7 +72,7 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		_, err = fmt.Fprintf(w, "scopes: %s\nemail: %s\n", scopes, user.Email)
+		_, err = fmt.Fprintf(w, "scopes: %s\n\nemail: %s\n", scopes, user.Email)
 		if err != nil {
 			log.Println(err)
 		}

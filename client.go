@@ -41,17 +41,9 @@ func NewClient(
 	}
 }
 
-func (c *Client) HttpClient() *http.Client {
-	return c.baseClient
-}
-
 func (c *Client) SetHttpClient(httpClient *http.Client) {
 	c.baseClient = httpClient
 	c.clientWithTokenSource = nil
-}
-
-func (c *Client) Token() *oauth2.Token {
-	return c.token
 }
 
 func (c *Client) SetToken(token *oauth2.Token) {

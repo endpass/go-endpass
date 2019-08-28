@@ -3,6 +3,7 @@ package endpass
 import (
 	"fmt"
 	"io"
+	"net/http"
 )
 
 type Document struct {
@@ -55,4 +56,36 @@ func (c *Client) DocumentFile(id string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return r.Body, nil
+}
+
+func (c *Client) DocumentFrontFile(id string) (io.ReadCloser, error) {
+	return c.documentFrontBackFile(id, "front")
+}
+
+func (c *Client) DocumentBackFile(id string) (io.ReadCloser, error) {
+	return c.documentFrontBackFile(id, "back")
+}
+
+func (c *Client) documentFrontBackFile(id string, documentSide string) (io.ReadCloser, error) {
+	switch documentSide {
+	case "front":
+	case "back":
+	default:
+		return nil, fmt.Errorf(
+			"document side must be \"front\" or \"back\", got \"%s\"",
+			documentSide,
+		)
+	}
+	resp, err := c.Get(fmt.Sprintf("/documents/%s/%s/file", id, documentSide))
+	if err != nil {
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return resp.Body, nil
+	case http.StatusNoContent:
+		return nil, ErrFileNotUploaded
+	default:
+		return nil, responseToError(resp)
+	}
 }

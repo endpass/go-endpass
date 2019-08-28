@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	ErrNoAccessToken = errors.New("Before doing requests you must pass authorization and get access token. See \"AuthCodeURL\" and \"Exchange\" methods")
+	ErrNoAccessToken   = errors.New("Before doing requests you must pass authorization and get access token. See \"AuthCodeURL\" and \"Exchange\" methods")
+	ErrFileNotUploaded = errors.New("file not uploaded yet")
 )
 
 // ErrorHTTPResponse return this error if StatusCode from API not equal 200.

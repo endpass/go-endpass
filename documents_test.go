@@ -58,3 +58,25 @@ func (ts *TestSuite) TestDocumentFile() {
 	ts.NotEmpty(fileBody)
 	ts.Equal("{}\n", string(fileBody))
 }
+
+func (ts *TestSuite) TestDocumentFrontFile() {
+	documentFile, err := ts.c.DocumentFrontFile("1")
+	ts.NoError(err)
+	ts.NotEmpty(documentFile)
+	defer documentFile.Close()
+	fileBody, err := ioutil.ReadAll(documentFile)
+	ts.NoError(err)
+	ts.NotEmpty(fileBody)
+	ts.Equal("{}\n", string(fileBody))
+}
+
+func (ts *TestSuite) TestDocumentBackFile() {
+	documentFile, err := ts.c.DocumentBackFile("1")
+	ts.NoError(err)
+	ts.NotEmpty(documentFile)
+	defer documentFile.Close()
+	fileBody, err := ioutil.ReadAll(documentFile)
+	ts.NoError(err)
+	ts.NotEmpty(fileBody)
+	ts.Equal("{}\n", string(fileBody))
+}

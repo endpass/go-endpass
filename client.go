@@ -69,7 +69,7 @@ func (c *Client) Exchange(code string) error {
 	return nil
 }
 
-func (c *Client) Get(path string) (*http.Response, error) {
+func (c *Client) client() (*http.Client, error) {
 	if c.token == nil {
 		return nil, ErrNoAccessToken
 	}
@@ -77,16 +77,24 @@ func (c *Client) Get(path string) (*http.Response, error) {
 		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, c.baseClient)
 		c.clientWithTokenSource = c.oauth2Config.Client(ctx, c.token)
 	}
+	return c.clientWithTokenSource, nil
+}
+
+func (c *Client) Get(path string) (*http.Response, error) {
+	client, err := c.client()
+	if err != nil {
+		return nil, err
+	}
 	reqUrl := c.baseUrl + path
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.clientWithTokenSource.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return check200Response(resp)
+	return resp, nil
 }
 
 // parses response as JSON into an object
@@ -100,15 +108,11 @@ func (c *Client) parseResponse(r *http.Response, v interface{}) error {
 	return json.Unmarshal(body, v)
 }
 
-// check200Response converts response codes not equal 200 to errors
-func check200Response(resp *http.Response) (*http.Response, error) {
-	if resp.StatusCode == http.StatusOK {
-		return resp, nil
-	}
+func responseToError(resp *http.Response) error {
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	var bodyString string
 	if utf8.Valid(bodyBytes) {
@@ -116,5 +120,5 @@ func check200Response(resp *http.Response) (*http.Response, error) {
 	} else {
 		bodyString = "<binary response>"
 	}
-	return nil, NewErrorHTTPResponse(resp.Status, bodyString)
+	return NewErrorHTTPResponse(resp.Status, bodyString)
 }

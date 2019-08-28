@@ -109,7 +109,7 @@ func (ts *TestSuite) TestDocumentFile() {
 	ts.Equal("{}", string(fileBody))
 }
 
-func (ts *TestSuite) TestDocumentFrontFile() {
+func (ts *TestSuite) TestDocumentFrontFile200() {
 	ts.testServer = createServer(
 		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
 	)
@@ -125,7 +125,18 @@ func (ts *TestSuite) TestDocumentFrontFile() {
 	ts.Equal("{}", string(fileBody))
 }
 
-func (ts *TestSuite) TestDocumentBackFile() {
+func (ts *TestSuite) TestDocumentFrontFile204() {
+	ts.testServer = createServer(
+		http.StatusNoContent, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentFrontFile("1")
+	ts.Empty(documentFile)
+	ts.IsType(ErrFileNotUploaded, err)
+}
+
+func (ts *TestSuite) TestDocumentBackFile200() {
 	ts.testServer = createServer(
 		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
 	)
@@ -139,4 +150,15 @@ func (ts *TestSuite) TestDocumentBackFile() {
 	ts.NoError(err)
 	ts.NotEmpty(fileBody)
 	ts.Equal("{}", string(fileBody))
+}
+
+func (ts *TestSuite) TestDocumentBackFile204() {
+	ts.testServer = createServer(
+		http.StatusNoContent, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentBackFile("1")
+	ts.Empty(documentFile)
+	ts.IsType(ErrFileNotUploaded, err)
 }

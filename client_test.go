@@ -1,8 +1,6 @@
 package endpass
 
 import (
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,29 +11,23 @@ import (
 
 type TestSuite struct {
 	suite.Suite
-
-	// test client
-	c *Client
-
-	// test server
-	srv *httptest.Server
+	client     *Client
+	testServer *httptest.Server
 }
 
 func (ts *TestSuite) SetupSuite() {
-	ts.srv = httptest.NewServer(ts)
-	ts.c = NewClient("clientID", "clientSecret", []string{"1111"}, "12345", "12345")
-	ts.c.token = &oauth2.Token{}
-	ts.c.baseClient = &http.Client{}
-	ts.c.clientWithTokenSource = &http.Client{}
-	ts.c.baseUrl = ts.srv.URL
+	ts.client = NewClient("clientID", "clientSecret", []string{"1111"}, "12345", "12345")
+	ts.client.token = &oauth2.Token{}
+	ts.client.baseClient = &http.Client{}
+	ts.client.clientWithTokenSource = &http.Client{}
 }
 
-// handler for API requests
-func (ts *TestSuite) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fp := fmt.Sprintf("./testdata%s.json", r.URL.Path)
-	body, err := ioutil.ReadFile(fp)
-	ts.NoError(err)
-	w.Write(body)
+func (ts *TestSuite) AfterTest(suiteName, testName string) {
+	ts.testServer.Close()
+}
+
+func (ts *TestSuite) SetBaseUrl(url string) {
+	ts.client.baseUrl = url
 }
 
 func TestClient(t *testing.T) {

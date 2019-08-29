@@ -2,10 +2,34 @@ package endpass
 
 import (
 	"io/ioutil"
+	"net/http"
 )
 
 func (ts *TestSuite) TestDocuments() {
-	documents, err := ts.c.Documents()
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, []interface{}{
+			map[string]interface{}{
+				"id":               "f1f80c7a-57c7-4259-8e80-d1bb09932e82",
+				"createdAt":        1543336121,
+				"status":           "New",
+				"documentType":     "Passport",
+				"description":      "Custom document description",
+				"firstName":        "Test",
+				"lastName":         "User",
+				"number":           "47313892501",
+				"dateOfBirth":      1543323121,
+				"dateOfIssue":      1543336122,
+				"dateOfExpiry":     1543336123,
+				"issuingCountry":   "Country",
+				"issuingAuthority": "Authority",
+				"issuingPlace":     "Place",
+				"address":          "Address",
+			},
+		},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documents, err := ts.client.Documents()
 	ts.NoError(err)
 	ts.NotEmpty(documents)
 	ts.Len(documents, 1)
@@ -28,7 +52,28 @@ func (ts *TestSuite) TestDocuments() {
 }
 
 func (ts *TestSuite) TestDocument() {
-	document, err := ts.c.Document("1")
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{
+			"id":               "f1f80c7a-57c7-4259-8e80-d1bb09932e82",
+			"createdAt":        1543336121,
+			"status":           "New",
+			"documentType":     "Passport",
+			"description":      "Custom document description",
+			"firstName":        "Test",
+			"lastName":         "User",
+			"number":           "47313892501",
+			"dateOfBirth":      1543323121,
+			"dateOfIssue":      1543336122,
+			"dateOfExpiry":     1543336123,
+			"issuingCountry":   "Country",
+			"issuingAuthority": "Authority",
+			"issuingPlace":     "Place",
+			"address":          "Address",
+		},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	document, err := ts.client.Document("1")
 	ts.NoError(err)
 	ts.NotEmpty(document)
 	ts.Equal("f1f80c7a-57c7-4259-8e80-d1bb09932e82", document.ID)
@@ -49,34 +94,71 @@ func (ts *TestSuite) TestDocument() {
 }
 
 func (ts *TestSuite) TestDocumentFile() {
-	documentFile, err := ts.c.DocumentFile("1")
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentFile("1")
 	ts.NoError(err)
 	ts.NotEmpty(documentFile)
 	defer documentFile.Close()
 	fileBody, err := ioutil.ReadAll(documentFile)
 	ts.NoError(err)
 	ts.NotEmpty(fileBody)
-	ts.Equal("{}\n", string(fileBody))
+	ts.Equal("{}", string(fileBody))
 }
 
-func (ts *TestSuite) TestDocumentFrontFile() {
-	documentFile, err := ts.c.DocumentFrontFile("1")
+func (ts *TestSuite) TestDocumentFrontFile200() {
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentFrontFile("1")
 	ts.NoError(err)
 	ts.NotEmpty(documentFile)
 	defer documentFile.Close()
 	fileBody, err := ioutil.ReadAll(documentFile)
 	ts.NoError(err)
 	ts.NotEmpty(fileBody)
-	ts.Equal("{}\n", string(fileBody))
+	ts.Equal("{}", string(fileBody))
 }
 
-func (ts *TestSuite) TestDocumentBackFile() {
-	documentFile, err := ts.c.DocumentBackFile("1")
+func (ts *TestSuite) TestDocumentFrontFile204() {
+	ts.testServer = createServer(
+		http.StatusNoContent, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentFrontFile("1")
+	ts.Empty(documentFile)
+	ts.IsType(ErrFileNotUploaded, err)
+}
+
+func (ts *TestSuite) TestDocumentBackFile200() {
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentBackFile("1")
 	ts.NoError(err)
 	ts.NotEmpty(documentFile)
 	defer documentFile.Close()
 	fileBody, err := ioutil.ReadAll(documentFile)
 	ts.NoError(err)
 	ts.NotEmpty(fileBody)
-	ts.Equal("{}\n", string(fileBody))
+	ts.Equal("{}", string(fileBody))
+}
+
+func (ts *TestSuite) TestDocumentBackFile204() {
+	ts.testServer = createServer(
+		http.StatusNoContent, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	documentFile, err := ts.client.DocumentBackFile("1")
+	ts.Empty(documentFile)
+	ts.IsType(ErrFileNotUploaded, err)
 }

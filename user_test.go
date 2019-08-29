@@ -1,7 +1,26 @@
 package endpass
 
+import "net/http"
+
 func (ts *TestSuite) TestUser() {
-	user, err := ts.c.User()
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{
+			"id":    "0d8c5fa3-c8a5-4c5f-8435-f35aef353f30",
+			"email": "user@endpass.com",
+			"phones": []interface{}{
+				map[string]interface{}{
+					"id":        "c4d4ef1c-0d73-4a6f-aad9-7600a8fc79b8",
+					"createdAt": 1557220652,
+					"status":    "Verified",
+					"country":   "7",
+					"number":    "7771112233",
+				},
+			},
+		},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	user, err := ts.client.User()
 	ts.NoError(err)
 	ts.NotEmpty(user)
 	ts.Equal("0d8c5fa3-c8a5-4c5f-8435-f35aef353f30", user.ID)
@@ -15,7 +34,22 @@ func (ts *TestSuite) TestUser() {
 }
 
 func (ts *TestSuite) TestUserAddress() {
-	userAddress, err := ts.c.UserAddress()
+	ts.testServer = createServer(
+		http.StatusOK, MIMEApplicationJSONCharsetUTF8, map[string]interface{}{
+			"apartmentNumber": "apartment number 1",
+			"streetNumber":    "street number 2",
+			"street":          "street 8",
+			"city":            "city 17",
+			"stateRegion":     "state region",
+			"country":         "big country",
+			"postalCode":      "postal code",
+			"lat":             1.1,
+			"lng":             2.2,
+		},
+	)
+	ts.client.baseUrl = ts.testServer.URL
+
+	userAddress, err := ts.client.UserAddress()
 	ts.NoError(err)
 	ts.NotEmpty(userAddress)
 	ts.NotNil(userAddress)
